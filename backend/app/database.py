@@ -1,72 +1,97 @@
 """
-Database configuration and session management
+Database configuration and session management using Prisma
 """
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from prisma import Prisma
 from app.config import settings
 
-# Create engine
-engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {},
-    echo=settings.DEBUG
-)
+# Create Prisma client instance
+prisma = Prisma()
 
-# Create session factory
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Base class for models
-Base = declarative_base()
-
-def get_db():
-    """Dependency to get database session"""
-    db = SessionLocal()
+async def get_db():
+    """Dependency to get database session
+    
+    Note: Prisma is async, so this should be used with async endpoints
+    """
+    if not prisma.is_connected():
+        await prisma.connect()
     try:
-        yield db
+        yield prisma
     finally:
-        db.close()
+        pass  # Prisma connection is managed globally
 
-def seed_demo_users():
-    """Create demo users if they don't exist"""
-    from app.models import User
+def get_db_sync():
+    """Synchronous wrapper for database access in non-async contexts"""
+    return prisma
+
+async def seed_demo_data():
+    """Create demo users and sections if they don't exist"""
     from app.services.security import hash_password
     
-    db = SessionLocal()
     try:
+        await prisma.connect()
+        
         # Check if demo users already exist
-        teacher = db.query(User).filter(User.email == "teacher@school.com").first()
-        student = db.query(User).filter(User.email == "student@school.com").first()
+        teacher = await prisma.user.find_unique(
+            where={"email": "teacher@school.com"}
+        )
+        
+        student_user = await prisma.user.find_unique(
+            where={"email": "student@school.com"}
+        )
         
         if not teacher:
-            teacher = User(
-                email="teacher@school.com",
-                full_name="Demo Teacher",
-                hashed_password=hash_password("password123"),
-                role="teacher",
-                is_active=True
+            teacher = await prisma.user.create(
+                data={
+                    "email": "teacher@school.com",
+                    "fullName": "Demo Teacher",
+                    "hashedPassword": hash_password("password123"),
+                    "role": "teacher",
+                    "isActive": True
+                }
             )
-            db.add(teacher)
         
-        if not student:
-            student = User(
-                email="student@school.com",
-                full_name="Demo Student",
-                hashed_password=hash_password("password123"),
-                role="student",
-                is_active=True
+        if not student_user:
+            student_user = await prisma.user.create(
+                data={
+                    "email": "student@school.com",
+                    "fullName": "Demo Student",
+                    "hashedPassword": hash_password("password123"),
+                    "role": "student",
+                    "isActive": True
+                }
             )
-            db.add(student)
         
-        db.commit()
-        print("✓ Demo users seeded successfully")
+        # Create default sections for teacher
+        for section_name in ['A', 'B', 'C']:
+            for year in [1, 2, 3, 4]:
+                existing = await prisma.section.find_first(
+                    where={
+                        "teacherId": teacher.id,
+                        "name": section_name,
+                        "year": year
+                    }
+                )
+                if not existing:
+                    await prisma.section.create(
+                        data={
+                            "name": section_name,
+                            "year": year,
+                            "teacherId": teacher.id
+                        }
+                    )
+        
+        print("✓ Demo users and sections seeded successfully")
     except Exception as e:
-        print(f"Note: Could not seed demo users: {e}")
-        db.rollback()
+        print(f"Note: Could not seed demo data: {e}")
     finally:
-        db.close()
+        await prisma.disconnect()
 
-def init_db():
+async def init_db():
     """Initialize database tables and seed demo data"""
-    Base.metadata.create_all(bind=engine)
-    seed_demo_users()
+    try:
+        await prisma.connect()
+        print("✓ Connected to database")
+        await seed_demo_data()
+    except Exception as e:
+        print(f"Error initializing database: {e}")
+

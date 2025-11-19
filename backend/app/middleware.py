@@ -1,20 +1,15 @@
 """
-JWT token dependencies for route protection
+JWT token dependencies for route protection using Prisma
 """
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer
-from sqlalchemy.orm import Session
-from app.database import get_db
+from app.database import prisma
 from app.services.security import decode_token
-from app.models import User
 from app.services import UserService
 
 security = HTTPBearer()
 
-async def get_current_user(
-    credentials = Depends(security),
-    db: Session = Depends(get_db)
-) -> User:
+async def get_current_user(credentials = Depends(security)):
     """Get current user from JWT token"""
     token = credentials.credentials
     payload = decode_token(token)
@@ -32,7 +27,7 @@ async def get_current_user(
             detail="Invalid token"
         )
     
-    user = UserService.get_user(db, user_id=int(user_id))
+    user = await UserService.get_user(prisma, user_id=int(user_id))
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -41,7 +36,7 @@ async def get_current_user(
     
     return user
 
-def get_teacher(current_user: User = Depends(get_current_user)) -> User:
+async def get_teacher(current_user = Depends(get_current_user)):
     """Verify user is a teacher"""
     if current_user.role != "teacher":
         raise HTTPException(
@@ -50,7 +45,7 @@ def get_teacher(current_user: User = Depends(get_current_user)) -> User:
         )
     return current_user
 
-def get_student(current_user: User = Depends(get_current_user)) -> User:
+async def get_student(current_user = Depends(get_current_user)):
     """Verify user is a student"""
     if current_user.role != "student":
         raise HTTPException(

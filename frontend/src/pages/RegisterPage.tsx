@@ -10,6 +10,7 @@ export const RegisterPage: React.FC = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
+  const { setDemoStudent, setDemoTeacher } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,8 +25,9 @@ export const RegisterPage: React.FC = () => {
     }
 
     try {
-      await register(email, password, fullName, role);
-      navigate('/');
+      const user = await register(email, password, fullName, role);
+      if (user?.role === 'teacher') navigate('/teacher-dashboard');
+      else navigate('/student-dashboard');
     } catch (err) {
       setError('Registration failed. Email might already be in use.');
     } finally {
@@ -116,6 +118,10 @@ export const RegisterPage: React.FC = () => {
           <a href="/login" className="text-primary-600 hover:underline font-semibold">
             Login here
           </a>
+        </div>
+        <div className="mt-4 flex gap-3">
+          <button onClick={() => { setDemoStudent(); navigate('/student-dashboard'); }} className="w-1/2 bg-green-500 text-white px-4 py-2 rounded">Demo Student</button>
+          <button onClick={() => { setDemoTeacher(); navigate('/teacher-dashboard'); }} className="w-1/2 bg-blue-600 text-white px-4 py-2 rounded">Demo Teacher</button>
         </div>
       </div>
     </div>

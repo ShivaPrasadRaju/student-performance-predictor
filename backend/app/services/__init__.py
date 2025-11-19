@@ -1,125 +1,121 @@
 """
-Business logic services
+Business logic services using Prisma ORM
 """
-from sqlalchemy.orm import Session
-from sqlalchemy import desc
 from typing import Optional, List
-from app.models import User, Student, Prediction
 from app.schemas import (
     UserRegister, StudentCreate, StudentUpdate, PredictionRequest,
+    SectionCreate, SectionUpdate, SectionResponse,
     RiskDistribution, ClassAnalytics
 )
 from app.services.security import hash_password, verify_password, create_access_token
-from datetime import timedelta
+from prisma import Prisma
 
 # ===================== User Service =====================
 
 class UserService:
     
     @staticmethod
-    def create_user(db: Session, user: UserRegister) -> User:
+    async def create_user(prisma: Prisma, user: UserRegister):
         """Create a new user"""
-        db_user = User(
-            email=user.email,
-            full_name=user.full_name,
-            hashed_password=hash_password(user.password),
-            role=user.role
+        db_user = await prisma.user.create(
+            data={
+                "email": user.email,
+                "fullName": user.full_name,
+                "hashedPassword": hash_password(user.password),
+                "role": user.role
+            }
         )
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
         return db_user
     
     @staticmethod
-    def get_user_by_email(db: Session, email: str) -> Optional[User]:
+    async def get_user_by_email(prisma: Prisma, email: str) -> Optional:
         """Get user by email"""
-        return db.query(User).filter(User.email == email).first()
+        return await prisma.user.find_unique(where={"email": email})
     
     @staticmethod
-    def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
+    async def authenticate_user(prisma: Prisma, email: str, password: str) -> Optional:
         """Authenticate user with email and password"""
-        user = UserService.get_user_by_email(db, email)
+        user = await UserService.get_user_by_email(prisma, email)
         if not user or not verify_password(password, user.hashed_password):
             return None
         return user
     
     @staticmethod
-    def get_user(db: Session, user_id: int) -> Optional[User]:
+    async def get_user(prisma: Prisma, user_id: int) -> Optional:
         """Get user by ID"""
-        return db.query(User).filter(User.id == user_id).first()
+        return await prisma.user.find_unique(where={"id": user_id})
 
 # ===================== Student Service =====================
 
 class StudentService:
     
     @staticmethod
-    def create_student(db: Session, teacher_id: int, student: StudentCreate) -> Student:
+    async def create_student(prisma: Prisma, teacher_id: int, student: StudentCreate):
         """Create a new student"""
-        db_student = Student(
-            student_id=student.student_id,
-            name=student.name,
-            email=student.email,
-            class_name=student.class_name,
-            year=student.year,
-            section=student.section,
-            teacher_id=teacher_id
+        db_student = await prisma.student.create(
+            data={
+                "studentId": student.student_id,
+                "name": student.name,
+                "email": student.email,
+                "className": student.class_name,
+                "year": student.year,
+                "section": student.section,
+                "teacherId": teacher_id
+            }
         )
-        db.add(db_student)
-        db.commit()
-        db.refresh(db_student)
         return db_student
     
     @staticmethod
-    def get_students_for_teacher(db: Session, teacher_id: int) -> List[Student]:
+    async def get_students_for_teacher(prisma: Prisma, teacher_id: int) -> List:
         """Get all students for a teacher"""
-        return db.query(Student).filter(Student.teacher_id == teacher_id).all()
+        return await prisma.student.find_many(
+            where={"teacherId": teacher_id}
+        )
     
     @staticmethod
-    def get_student(db: Session, student_id: int) -> Optional[Student]:
+    async def get_student(prisma: Prisma, student_id: int) -> Optional:
         """Get student by ID"""
-        return db.query(Student).filter(Student.id == student_id).first()
+        return await prisma.student.find_unique(where={"id": student_id})
     
     @staticmethod
-    def update_student(
-        db: Session, student_id: int, teacher_id: int, update: StudentUpdate
-    ) -> Optional[Student]:
+    async def update_student(
+        prisma: Prisma, student_id: int, teacher_id: int, update: StudentUpdate
+    ) -> Optional:
         """Update student (teacher only)"""
-        student = db.query(Student).filter(
-            Student.id == student_id,
-            Student.teacher_id == teacher_id
-        ).first()
-        
-        if not student:
+        # Verify ownership
+        student = await prisma.student.find_unique(where={"id": student_id})
+        if not student or student.teacher_id != teacher_id:
             return None
         
+        update_data = {}
         if update.name:
-            student.name = update.name
+            update_data["name"] = update.name
         if update.email:
-            student.email = update.email
+            update_data["email"] = update.email
         if update.class_name:
-            student.class_name = update.class_name
+            update_data["className"] = update.class_name
         if getattr(update, 'year', None) is not None:
-            student.year = update.year
+            update_data["year"] = update.year
         if getattr(update, 'section', None) is not None:
-            student.section = update.section
+            update_data["section"] = update.section
         
-        db.commit()
-        db.refresh(student)
-        return student
+        if not update_data:
+            return student
+        
+        updated = await prisma.student.update(
+            where={"id": student_id},
+            data=update_data
+        )
+        return updated
     
     @staticmethod
-    def delete_student(db: Session, student_id: int, teacher_id: int) -> bool:
+    async def delete_student(prisma: Prisma, student_id: int, teacher_id: int) -> bool:
         """Delete student (teacher only)"""
-        student = db.query(Student).filter(
-            Student.id == student_id,
-            Student.teacher_id == teacher_id
-        ).first()
-        
-        if not student:
+        student = await prisma.student.find_unique(where={"id": student_id})
+        if not student or student.teacher_id != teacher_id:
             return False
         
-        db.delete(student)
-        db.commit()
+        await prisma.student.delete(where={"id": student_id})
         return True
 
 # ===================== Prediction Service =====================
@@ -127,73 +123,83 @@ class StudentService:
 class PredictionService:
     
     @staticmethod
-    def create_prediction(
-        db: Session,
+    async def create_prediction(
+        prisma: Prisma,
         user_id: int,
         prediction_data: PredictionRequest,
         ml_result: dict,
         student_id: Optional[int] = None
-    ) -> Prediction:
+    ):
         """Create and store a prediction"""
-        prediction = Prediction(
-            user_id=user_id,
-            student_id=student_id,
-            study_hours=prediction_data.study_hours,
-            attendance=prediction_data.attendance,
-            assignments_score=prediction_data.assignments_score,
-            past_marks=prediction_data.past_marks,
-            engagement_score=prediction_data.engagement_score,
-            predicted_score=ml_result['predicted_score'],
-            pass_fail=ml_result['pass_fail'],
-            risk_category=ml_result['risk_category'],
-            confidence=ml_result['confidence']
+        prediction = await prisma.prediction.create(
+            data={
+                "userId": user_id,
+                "studentId": student_id,
+                "studyHours": prediction_data.study_hours,
+                "attendance": prediction_data.attendance,
+                "assignmentsScore": prediction_data.assignments_score,
+                "pastMarks": prediction_data.past_marks,
+                "engagementScore": prediction_data.engagement_score,
+                "predictedScore": ml_result['predicted_score'],
+                "passFail": ml_result['pass_fail'],
+                "riskCategory": ml_result['risk_category'],
+                "confidence": ml_result['confidence']
+            }
         )
-        db.add(prediction)
-        db.commit()
-        db.refresh(prediction)
         return prediction
     
     @staticmethod
-    def get_user_predictions(db: Session, user_id: int, limit: int = 10) -> List[Prediction]:
+    async def get_user_predictions(prisma: Prisma, user_id: int, limit: int = 10) -> List:
         """Get predictions for a user"""
-        return db.query(Prediction).filter(
-            Prediction.user_id == user_id
-        ).order_by(desc(Prediction.created_at)).limit(limit).all()
+        return await prisma.prediction.find_many(
+            where={"userId": user_id},
+            order={"createdAt": "desc"},
+            take=limit
+        )
     
     @staticmethod
-    def get_latest_prediction(db: Session, user_id: int) -> Optional[Prediction]:
+    async def get_latest_prediction(prisma: Prisma, user_id: int) -> Optional:
         """Get latest prediction for a user"""
-        return db.query(Prediction).filter(
-            Prediction.user_id == user_id
-        ).order_by(desc(Prediction.created_at)).first()
+        return await prisma.prediction.find_first(
+            where={"userId": user_id},
+            order={"createdAt": "desc"}
+        )
     
     @staticmethod
-    def get_student_predictions(
-        db: Session, student_id: int, limit: int = 10
-    ) -> List[Prediction]:
+    async def get_student_predictions(
+        prisma: Prisma, student_id: int, limit: int = 10
+    ) -> List:
         """Get predictions for a student"""
-        return db.query(Prediction).filter(
-            Prediction.student_id == student_id
-        ).order_by(desc(Prediction.created_at)).limit(limit).all()
+        return await prisma.prediction.find_many(
+            where={"studentId": student_id},
+            order={"createdAt": "desc"},
+            take=limit
+        )
     
     @staticmethod
-    def get_class_predictions(db: Session, teacher_id: int) -> List[Prediction]:
+    async def get_class_predictions(prisma: Prisma, teacher_id: int) -> List:
         """Get all predictions for a teacher's class"""
         # Get all students for this teacher
-        students = db.query(Student.id).filter(Student.teacher_id == teacher_id).all()
-        student_ids = [s[0] for s in students]
+        students = await prisma.student.find_many(
+            where={"teacherId": teacher_id},
+            select={"id": True}
+        )
+        student_ids = [s.id for s in students]
         
         if not student_ids:
             return []
         
-        return db.query(Prediction).filter(
-            Prediction.student_id.in_(student_ids)
-        ).order_by(desc(Prediction.created_at)).all()
+        return await prisma.prediction.find_many(
+            where={"studentId": {"in": student_ids}},
+            order={"createdAt": "desc"}
+        )
     
     @staticmethod
-    def get_class_analytics(db: Session, teacher_id: int) -> ClassAnalytics:
+    async def get_class_analytics(prisma: Prisma, teacher_id: int) -> ClassAnalytics:
         """Get analytics for a teacher's class"""
-        students = db.query(Student).filter(Student.teacher_id == teacher_id).all()
+        students = await prisma.student.find_many(
+            where={"teacherId": teacher_id}
+        )
         student_ids = [s.id for s in students]
         
         if not student_ids:
@@ -210,9 +216,10 @@ class PredictionService:
         # Get latest prediction for each student
         predictions = []
         for student_id in student_ids:
-            pred = db.query(Prediction).filter(
-                Prediction.student_id == student_id
-            ).order_by(desc(Prediction.created_at)).first()
+            pred = await prisma.prediction.find_first(
+                where={"studentId": student_id},
+                order={"createdAt": "desc"}
+            )
             if pred:
                 predictions.append(pred)
         
@@ -241,3 +248,83 @@ class PredictionService:
             risk_distribution=risk_dist,
             pass_rate=round(pass_rate, 2)
         )
+
+# ===================== Section Service =====================
+
+class SectionService:
+    
+    @staticmethod
+    async def create_section(prisma: Prisma, teacher_id: int, section: SectionCreate):
+        """Create a new section"""
+        db_section = await prisma.section.create(
+            data={
+                "name": section.name.upper(),
+                "year": section.year,
+                "teacherId": teacher_id
+            }
+        )
+        return db_section
+    
+    @staticmethod
+    async def get_sections_for_teacher(prisma: Prisma, teacher_id: int, year: Optional[int] = None) -> List:
+        """Get all sections for a teacher, optionally filtered by year"""
+        where = {"teacherId": teacher_id}
+        if year is not None:
+            where["year"] = year
+        
+        return await prisma.section.find_many(
+            where=where,
+            order=[{"year": "asc"}, {"name": "asc"}]
+        )
+    
+    @staticmethod
+    async def get_section(prisma: Prisma, section_id: int) -> Optional:
+        """Get section by ID"""
+        return await prisma.section.find_unique(where={"id": section_id})
+    
+    @staticmethod
+    async def get_section_by_name_and_year(
+        prisma: Prisma, teacher_id: int, name: str, year: int
+    ) -> Optional:
+        """Get section by name and year for a teacher"""
+        return await prisma.section.find_first(
+            where={
+                "teacherId": teacher_id,
+                "name": name.upper(),
+                "year": year
+            }
+        )
+    
+    @staticmethod
+    async def update_section(
+        prisma: Prisma, section_id: int, teacher_id: int, update: SectionUpdate
+    ) -> Optional:
+        """Update section (teacher only)"""
+        section = await prisma.section.find_unique(where={"id": section_id})
+        if not section or section.teacher_id != teacher_id:
+            return None
+        
+        update_data = {}
+        if update.name:
+            update_data["name"] = update.name.upper()
+        if update.year is not None:
+            update_data["year"] = update.year
+        
+        if not update_data:
+            return section
+        
+        updated = await prisma.section.update(
+            where={"id": section_id},
+            data=update_data
+        )
+        return updated
+    
+    @staticmethod
+    async def delete_section(prisma: Prisma, section_id: int, teacher_id: int) -> bool:
+        """Delete section (teacher only)"""
+        section = await prisma.section.find_unique(where={"id": section_id})
+        if not section or section.teacher_id != teacher_id:
+            return False
+        
+        await prisma.section.delete(where={"id": section_id})
+        return True

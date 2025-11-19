@@ -42,12 +42,12 @@ const AppContent: React.FC = () => {
       <>
         <Navbar />
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<Navigate to={user.role === 'teacher' ? '/teacher-dashboard' : '/student-dashboard'} replace />} />
           <Route path="/student-dashboard" element={<ProtectedRoute requiredRole="student"><StudentDashboard /></ProtectedRoute>} />
           <Route path="/teacher-dashboard" element={<ProtectedRoute requiredRole="teacher"><TeacherDashboard /></ProtectedRoute>} />
           <Route path="/about" element={<AboutPage />} />
-          <Route path="/login" element={<Navigate to="/" replace />} />
-          <Route path="/register" element={<Navigate to="/" replace />} />
+          <Route path="/login" element={<Navigate to={user.role === 'teacher' ? '/teacher-dashboard' : '/student-dashboard'} replace />} />
+          <Route path="/register" element={<Navigate to={user.role === 'teacher' ? '/teacher-dashboard' : '/student-dashboard'} replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </>

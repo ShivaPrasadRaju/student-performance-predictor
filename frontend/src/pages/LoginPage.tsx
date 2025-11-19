@@ -8,6 +8,7 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { setDemoStudent, setDemoTeacher } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -16,9 +17,10 @@ export const LoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
-      // Redirect will be handled by App component based on role
-      navigate('/');
+      const user = await login(email, password);
+      const role = user?.role || JSON.parse(localStorage.getItem('user') || '{}').role;
+      if (role === 'teacher') navigate('/teacher-dashboard');
+      else navigate('/student-dashboard');
     } catch (err) {
       setError('Invalid email or password');
     } finally {
@@ -86,6 +88,10 @@ export const LoginPage: React.FC = () => {
           <p className="font-semibold mb-2">Demo Credentials:</p>
           <p>👨‍🏫 Teacher: teacher@school.com / password123</p>
           <p>👨‍🎓 Student: student@school.com / password123</p>
+        </div>
+        <div className="mt-4 flex gap-3">
+          <button onClick={() => { setDemoStudent(); navigate('/student-dashboard'); }} className="w-1/2 bg-green-500 text-white px-4 py-2 rounded">Enter as Demo Student</button>
+          <button onClick={() => { setDemoTeacher(); navigate('/teacher-dashboard'); }} className="w-1/2 bg-blue-600 text-white px-4 py-2 rounded">Enter as Demo Teacher</button>
         </div>
       </div>
     </div>
