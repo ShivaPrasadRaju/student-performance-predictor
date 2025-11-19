@@ -11,7 +11,7 @@ from app.services import UserService
 from app.services.security import create_access_token
 from app.config import settings
 
-router = APIRouter(prefix="/auth", tags=["authentication"])
+router = APIRouter(prefix="/api/auth", tags=["authentication"])
 
 @router.post("/register", response_model=TokenResponse)
 def register(user_data: UserRegister, db: Session = Depends(get_db)):

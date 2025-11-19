@@ -9,12 +9,18 @@ export const TeacherDashboard: React.FC = () => {
   const [error, setError] = useState('');
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [filterRisk, setFilterRisk] = useState<string>('all');
+  const [year, setYear] = useState<number>(1);
+  const [sections, setSections] = useState<string[]>(['A']);
+  const [newSectionName, setNewSectionName] = useState<string>('');
+  const [selectedSection, setSelectedSection] = useState<string>('A');
 
   const [newStudent, setNewStudent] = useState({
     student_id: '',
     name: '',
     email: '',
     class_name: '',
+    year: 1,
+    section: 'A',
   });
 
   useEffect(() => {
@@ -38,6 +44,29 @@ export const TeacherDashboard: React.FC = () => {
     }
   };
 
+  const addSection = () => {
+    const s = newSectionName.trim().toUpperCase();
+    if (!s) return;
+    if (sections.includes(s)) {
+      setError('Section already exists');
+      return;
+    }
+    setSections([...sections, s]);
+    setSelectedSection(s);
+    setNewSectionName('');
+  };
+
+  const removeSection = (s: string) => {
+    if (sections.length === 1) {
+      setError('Cannot remove the last section');
+      return;
+    }
+    if (!confirm(`Remove section ${s}? This will not delete students automatically.`)) return;
+    const remaining = sections.filter(sec => sec !== s);
+    setSections(remaining);
+    if (selectedSection === s) setSelectedSection(remaining[0]);
+  };
+
   const handleAddStudent = async () => {
     try {
       setError('');
@@ -45,8 +74,12 @@ export const TeacherDashboard: React.FC = () => {
         setError('Please fill all fields');
         return;
       }
-      await studentService.create(newStudent);
-      setNewStudent({ student_id: '', name: '', email: '', class_name: '' });
+      await studentService.create({
+        ...newStudent,
+        year,
+        section: newStudent.section || selectedSection,
+      });
+      setNewStudent({ student_id: '', name: '', email: '', class_name: '', year, section: selectedSection });
       setShowAddStudent(false);
       await loadData();
     } catch (err) {
@@ -65,9 +98,9 @@ export const TeacherDashboard: React.FC = () => {
     }
   };
 
-  const filteredStudents = filterRisk === 'all' 
-    ? students 
-    : students.filter(s => s.latest_prediction?.risk_category === filterRisk);
+  const filteredStudents = students
+    .filter(s => s.year === year && s.section === selectedSection)
+    .filter(s => filterRisk === 'all' ? true : s.latest_prediction?.risk_category === filterRisk);
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
@@ -141,12 +174,32 @@ export const TeacherDashboard: React.FC = () => {
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Students</h2>
-            <button
+            <div className="flex gap-4 items-center">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-700">Year</label>
+                <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="px-3 py-2 border rounded">
+                  <option value={1}>1st Year</option>
+                  <option value={2}>2nd Year</option>
+                  <option value={3}>3rd Year</option>
+                  <option value={4}>4th Year</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-700">Section</label>
+                <select value={selectedSection} onChange={(e) => setSelectedSection(e.target.value)} className="px-3 py-2 border rounded">
+                  {sections.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <button onClick={() => removeSection(selectedSection)} className="px-3 py-2 bg-red-100 text-red-700 rounded">Remove</button>
+                <input placeholder="New Section (A)" value={newSectionName} onChange={(e) => setNewSectionName(e.target.value)} className="px-3 py-2 border rounded" />
+                <button onClick={addSection} className="px-3 py-2 bg-gray-100 rounded">Add Section</button>
+              </div>
+              <button
               onClick={() => setShowAddStudent(!showAddStudent)}
               className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg"
             >
               {showAddStudent ? 'Cancel' : '+ Add Student'}
             </button>
+            </div>
           </div>
 
           {showAddStudent && (
@@ -180,6 +233,12 @@ export const TeacherDashboard: React.FC = () => {
                   onChange={(e) => setNewStudent({ ...newStudent, class_name: e.target.value })}
                   className="px-4 py-2 border border-gray-300 rounded-lg"
                 />
+                <div className="flex items-center gap-2">
+                  <label className="text-sm">Section</label>
+                  <select value={newStudent.section} onChange={(e) => setNewStudent({ ...newStudent, section: e.target.value })} className="px-3 py-2 border rounded">
+                    {sections.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
               </div>
               <button
                 onClick={handleAddStudent}
@@ -227,6 +286,8 @@ export const TeacherDashboard: React.FC = () => {
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Class</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Year</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Section</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Latest Score</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Risk</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
@@ -240,6 +301,8 @@ export const TeacherDashboard: React.FC = () => {
                     <td className="px-4 py-3 text-sm text-gray-900 font-medium">{student.name}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{student.email}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{student.class_name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{student.year}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{student.section}</td>
                     <td className="px-4 py-3 text-sm">
                       {student.latest_prediction ? (
                         <span className="font-bold text-primary-600">{student.latest_prediction.predicted_score}</span>

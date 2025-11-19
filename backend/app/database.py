@@ -27,6 +27,46 @@ def get_db():
     finally:
         db.close()
 
+def seed_demo_users():
+    """Create demo users if they don't exist"""
+    from app.models import User
+    from app.services.security import hash_password
+    
+    db = SessionLocal()
+    try:
+        # Check if demo users already exist
+        teacher = db.query(User).filter(User.email == "teacher@school.com").first()
+        student = db.query(User).filter(User.email == "student@school.com").first()
+        
+        if not teacher:
+            teacher = User(
+                email="teacher@school.com",
+                full_name="Demo Teacher",
+                hashed_password=hash_password("password123"),
+                role="teacher",
+                is_active=True
+            )
+            db.add(teacher)
+        
+        if not student:
+            student = User(
+                email="student@school.com",
+                full_name="Demo Student",
+                hashed_password=hash_password("password123"),
+                role="student",
+                is_active=True
+            )
+            db.add(student)
+        
+        db.commit()
+        print("✓ Demo users seeded successfully")
+    except Exception as e:
+        print(f"Note: Could not seed demo users: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
 def init_db():
-    """Initialize database tables"""
+    """Initialize database tables and seed demo data"""
     Base.metadata.create_all(bind=engine)
+    seed_demo_users()

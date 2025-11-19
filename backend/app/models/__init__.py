@@ -31,6 +31,8 @@ class Student(Base):
     name = Column(String)
     email = Column(String, index=True)
     class_name = Column(String)
+    year = Column(Integer, default=1)
+    section = Column(String, default='A')
     teacher_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

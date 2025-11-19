@@ -44,12 +44,16 @@ class StudentCreate(BaseModel):
     name: str
     email: str
     class_name: str
+    year: int = Field(..., ge=1, le=4)
+    section: str = Field(..., min_length=1, max_length=3)
 
 class StudentUpdate(BaseModel):
     """Update student schema"""
     name: Optional[str] = None
     email: Optional[str] = None
     class_name: Optional[str] = None
+    year: Optional[int] = None
+    section: Optional[str] = None
 
 class StudentResponse(BaseModel):
     """Student response schema"""
@@ -58,6 +62,8 @@ class StudentResponse(BaseModel):
     name: str
     email: str
     class_name: str
+    year: int
+    section: str
     created_at: datetime
     updated_at: datetime
     
@@ -119,6 +125,8 @@ class StudentWithLatestPrediction(BaseModel):
     name: str
     email: str
     class_name: str
+    year: int
+    section: str
     latest_prediction: Optional[PredictionResponse] = None
     
     class Config:

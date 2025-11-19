@@ -60,6 +60,8 @@ class StudentService:
             name=student.name,
             email=student.email,
             class_name=student.class_name,
+            year=student.year,
+            section=student.section,
             teacher_id=teacher_id
         )
         db.add(db_student)
@@ -96,6 +98,10 @@ class StudentService:
             student.email = update.email
         if update.class_name:
             student.class_name = update.class_name
+        if getattr(update, 'year', None) is not None:
+            student.year = update.year
+        if getattr(update, 'section', None) is not None:
+            student.section = update.section
         
         db.commit()
         db.refresh(student)
