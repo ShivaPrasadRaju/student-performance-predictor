@@ -1,0 +1,51 @@
+{
+  "algorithm": "Random Forest Ensemble",
+  "features": [
+    "study_hours",
+    "attendance",
+    "assignments_score",
+    "past_marks",
+    "engagement_score"
+  ],
+  "n_estimators": 100,
+  "max_depth": 15,
+  "feature_importance": [
+    {
+      "feature": "past_marks",
+      "importance": 0.3364784620740638
+    },
+    {
+      "feature": "engagement_score",
+      "importance": 0.29525008802951835
+    },
+    {
+      "feature": "assignments_score",
+      "importance": 0.17709532611054601
+    },
+    {
+      "feature": "study_hours",
+      "importance": 0.1095257705915871
+    },
+    {
+      "feature": "attendance",
+      "importance": 0.08165035319428485
+    }
+  ],
+  "performance": {
+    "regression": {
+      "rmse": 3.7202128692456764,
+      "r2_score": 0.74301664550237,
+      "mse": 13.839983792501148
+    },
+    "classification": {
+      "accuracy": 0.975
+    }
+  },
+  "risk_thresholds": {
+    "low_risk": 75,
+    "medium_risk": 60,
+    "high_risk": 0
+  },
+  "version": "1.0",
+  "training_date": "2025-11-19T21:54:23.491928"
+}
