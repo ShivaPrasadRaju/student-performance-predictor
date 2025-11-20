@@ -27,6 +27,8 @@ model User {
   studentsManaged Student[]
   sections        Section[]
   predictions     Prediction[]
+  semesterEnrollments SemesterEnrollment[]
+  weeklyTasks     WeeklyTask[]
 
   @@map("users")
 }
@@ -109,4 +111,120 @@ model Prediction {
   @@index([studentId])
   @@index([createdAt])
   @@map("predictions")
+}
+
+// VTU Semester Enrollment - tracks which semester a student is enrolled in
+model SemesterEnrollment {
+  id          Int     @id @default(autoincrement())
+  studentId   Int     @unique @map("student_id")
+  semester    Int     // 1-8
+  academicYear String  @map("academic_year") // e.g., "2023-24"
+  status      String  @default("Active") // Active, Completed, Backlog
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  student     User    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectMarks SubjectMark[]
+  testScores  DailyTestScore[]
+  prediction  VTUPerformancePrediction?
+
+  @@index([studentId])
+  @@index([semester])
+  @@map("semester_enrollments")
+}
+
+// VTU Subject Marks - stores marks for each subject in a semester
+model SubjectMark {
+  id                  Int     @id @default(autoincrement())
+  enrollmentId        Int     @map("enrollment_id")
+  subjectCode         String  @map("subject_code") // e.g., "23CS301"
+  subjectName         String  @map("subject_name")
+  subjectType         String  @map("subject_type") // "Core", "Lab", "Elective", "Project"
+  marks               Float
+  credits             Int
+  weightage           Int
+  riskLevel           String  @default("Low") // "Low", "Medium", "High"
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  enrollment          SemesterEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@index([enrollmentId])
+  @@index([subjectCode])
+  @@index([marks])
+  @@map("subject_marks")
+}
+
+// VTU Daily Test Score - tracks consistency of daily tests
+model DailyTestScore {
+  id          Int     @id @default(autoincrement())
+  enrollmentId Int    @map("enrollment_id")
+  testDate    DateTime @map("test_date")
+  testTopic   String  @map("test_topic") // Subject or topic tested
+  difficulty  String  // "Easy", "Medium", "Hard"
+  score       Float   // Out of 100
+  maxScore    Float   @default(100) @map("max_score")
+  duration    Int     // in minutes
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relationships
+  enrollment  SemesterEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@index([enrollmentId])
+  @@index([testDate])
+  @@map("daily_test_scores")
+}
+
+// VTU Performance Prediction - stores semester-specific predictions with VTU rules
+model VTUPerformancePrediction {
+  id                      Int     @id @default(autoincrement())
+  enrollmentId            Int     @unique @map("enrollment_id")
+  semester                Int
+  academicStatus          String  @map("academic_status") // "Good", "Moderate", "Need Improvement"
+  sgpa                    Float   // Semester Grade Point Average
+  estimatedCgpa           Float   @map("estimated_cgpa") // Expected cumulative GPA
+  backlogRisk             Int     @default(0) @map("backlog_risk") // Number of subjects at risk
+  improvementTrend        String  @map("improvement_trend") // "Improving", "Declining", "Consistent"
+  testConsistency         Float   @map("test_consistency") // Consistency score from daily tests
+  recommendationPlan      String  @map("recommendation_plan") // JSON string with recommendations
+  studySchedule           String  @map("study_schedule") // JSON string with AI-generated schedule
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  enrollment              SemesterEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@index([enrollmentId])
+  @@index([semester])
+  @@map("vtu_performance_predictions")
+}
+
+// Weekly tasks logged by students for reminders/streak tracking
+model WeeklyTask {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  day        String
+  task       String
+  completed  Boolean  @default(false)
+  weekStart  DateTime @map("week_start")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, weekStart, day])
+  @@map("weekly_tasks")
+}
+
+// Add to User model relationships
+model StudentUser {
+  id          Int     @id @default(autoincrement())
+  userId      Int     @unique @map("user_id")
+  currentSemester Int   @default(1) @map("current_semester")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("student_users")
 }

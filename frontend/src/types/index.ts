@@ -71,3 +71,21 @@ export interface ModelInfo {
   version: string;
   training_date: string;
 }
+
+export interface WeeklyTaskEntry {
+  day: string;
+  task: string;
+  completed: boolean;
+}
+
+export interface WeeklyTaskResponse extends WeeklyTaskEntry {
+  id: number;
+  week_start: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WeeklyTaskSyncRequest {
+  week_start: string;
+  entries: WeeklyTaskEntry[];
+}

@@ -1,5 +1,15 @@
 import axios from 'axios';
-import { AuthResponse, Prediction, Student, ClassAnalytics, StudentWithLatestPrediction, ModelInfo } from '../types';
+import {
+  AuthResponse,
+  Prediction,
+  Student,
+  ClassAnalytics,
+  StudentWithLatestPrediction,
+  ModelInfo,
+  WeeklyTaskEntry,
+  WeeklyTaskResponse,
+  WeeklyTaskSyncRequest,
+} from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -113,6 +123,19 @@ export const infoService = {
 
   getHealth: async (): Promise<{ status: string }> => {
     const response = await api.get('/api/health');
+    return response.data;
+  },
+};
+
+export const weeklyTaskService = {
+  getWeek: async (weekStart?: string): Promise<WeeklyTaskResponse[]> => {
+    const response = await api.get('/api/v1/weekly-tasks', {
+      params: weekStart ? { week_start: weekStart } : {},
+    });
+    return response.data;
+  },
+  sync: async (payload: WeeklyTaskSyncRequest): Promise<WeeklyTaskResponse[]> => {
+    const response = await api.post('/api/v1/weekly-tasks', payload);
     return response.data;
   },
 };

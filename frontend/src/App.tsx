@@ -8,6 +8,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { StudentDashboard } from './pages/StudentDashboard';
 import { TeacherDashboard } from './pages/TeacherDashboard';
 import { AboutPage } from './pages/AboutPage';
+import VTUDashboard from './pages/VTUDashboard';
 import './index.css';
 
 // Protected Route Component
@@ -42,12 +43,13 @@ const AppContent: React.FC = () => {
       <>
         <Navbar />
         <Routes>
-          <Route path="/" element={<Navigate to={user.role === 'teacher' ? '/teacher-dashboard' : '/student-dashboard'} replace />} />
+          <Route path="/" element={<Navigate to={user.role === 'teacher' ? '/teacher-dashboard' : '/vtu-dashboard'} replace />} />
+          <Route path="/vtu-dashboard" element={<ProtectedRoute requiredRole="student"><VTUDashboard /></ProtectedRoute>} />
           <Route path="/student-dashboard" element={<ProtectedRoute requiredRole="student"><StudentDashboard /></ProtectedRoute>} />
           <Route path="/teacher-dashboard" element={<ProtectedRoute requiredRole="teacher"><TeacherDashboard /></ProtectedRoute>} />
           <Route path="/about" element={<AboutPage />} />
-          <Route path="/login" element={<Navigate to={user.role === 'teacher' ? '/teacher-dashboard' : '/student-dashboard'} replace />} />
-          <Route path="/register" element={<Navigate to={user.role === 'teacher' ? '/teacher-dashboard' : '/student-dashboard'} replace />} />
+          <Route path="/login" element={<Navigate to={user.role === 'teacher' ? '/teacher-dashboard' : '/vtu-dashboard'} replace />} />
+          <Route path="/register" element={<Navigate to={user.role === 'teacher' ? '/teacher-dashboard' : '/vtu-dashboard'} replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </>

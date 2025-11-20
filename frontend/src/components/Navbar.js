@@ -1,0 +1,7 @@
+import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+export const Navbar = () => {
+    const { user, logout } = useAuth();
+    return (_jsx("nav", { className: "bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-lg", children: _jsxs("div", { className: "max-w-7xl mx-auto px-4 py-4 flex justify-between items-center", children: [_jsx(Link, { to: "/", className: "text-2xl font-bold hover:opacity-90", children: "\uD83D\uDCCA Student Performance" }), _jsx("div", { className: "hidden md:flex gap-6", children: !user ? (_jsxs(_Fragment, { children: [_jsx(Link, { to: "/login", className: "hover:opacity-80", children: "Login" }), _jsx(Link, { to: "/register", className: "hover:opacity-80", children: "Register" })] })) : (_jsxs(_Fragment, { children: [_jsx(Link, { to: "/", className: "hover:opacity-80", children: "Home" }), user.role === 'student' ? (_jsx(Link, { to: "/student-dashboard", className: "hover:opacity-80", children: "My Dashboard" })) : (_jsx(Link, { to: "/teacher-dashboard", className: "hover:opacity-80", children: "Class Dashboard" })), _jsx(Link, { to: "/about", className: "hover:opacity-80", children: "About" }), _jsx("button", { onClick: logout, className: "bg-red-500 hover:bg-red-600 px-4 py-2 rounded transition", children: "Logout" })] })) })] }) }));
+};

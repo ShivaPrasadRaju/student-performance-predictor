@@ -7,8 +7,8 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, fullName: string, role: 'student' | 'teacher') => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (email: string, password: string, fullName: string, role: 'student' | 'teacher') => Promise<User>;
   logout: () => void;
   isDemo: boolean;
   setDemoStudent: () => void;

@@ -9,8 +9,7 @@ export const RegisterPage: React.FC = () => {
   const [role, setRole] = useState<'student' | 'teacher'>('student');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
-  const { setDemoStudent, setDemoTeacher } = useAuth();
+  const { register, setDemoStudent, setDemoTeacher } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {

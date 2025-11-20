@@ -84,7 +84,7 @@ class StudentService:
         """Update student (teacher only)"""
         # Verify ownership
         student = await prisma.student.find_unique(where={"id": student_id})
-        if not student or student.teacher_id != teacher_id:
+        if not student or student.teacherId != teacher_id:
             return None
         
         update_data = {}
@@ -112,7 +112,7 @@ class StudentService:
     async def delete_student(prisma: Prisma, student_id: int, teacher_id: int) -> bool:
         """Delete student (teacher only)"""
         student = await prisma.student.find_unique(where={"id": student_id})
-        if not student or student.teacher_id != teacher_id:
+        if not student or student.teacherId != teacher_id:
             return False
         
         await prisma.student.delete(where={"id": student_id})
@@ -227,14 +227,14 @@ class PredictionService:
         
         # Calculate metrics
         if predictions:
-            avg_score = sum(p.predicted_score for p in predictions) / len(predictions)
-            pass_count = sum(1 for p in predictions if p.pass_fail == "Pass")
+            avg_score = sum(p.predictedScore for p in predictions) / len(predictions)
+            pass_count = sum(1 for p in predictions if p.passFail == "Pass")
             pass_rate = (pass_count / len(predictions)) * 100
             
             risk_dist = RiskDistribution(
-                low_risk=sum(1 for p in predictions if p.risk_category == "Low"),
-                medium_risk=sum(1 for p in predictions if p.risk_category == "Medium"),
-                high_risk=sum(1 for p in predictions if p.risk_category == "High")
+                low_risk=sum(1 for p in predictions if p.riskCategory == "Low"),
+                medium_risk=sum(1 for p in predictions if p.riskCategory == "Medium"),
+                high_risk=sum(1 for p in predictions if p.riskCategory == "High")
             )
         else:
             avg_score = 0
@@ -248,6 +248,9 @@ class PredictionService:
             risk_distribution=risk_dist,
             pass_rate=round(pass_rate, 2)
         )
+
+
+from app.services.weekly_tasks import WeeklyTaskService
 
 # ===================== Section Service =====================
 
@@ -301,7 +304,7 @@ class SectionService:
     ) -> Optional:
         """Update section (teacher only)"""
         section = await prisma.section.find_unique(where={"id": section_id})
-        if not section or section.teacher_id != teacher_id:
+        if not section or section.teacherId != teacher_id:
             return None
         
         update_data = {}
@@ -323,7 +326,7 @@ class SectionService:
     async def delete_section(prisma: Prisma, section_id: int, teacher_id: int) -> bool:
         """Delete section (teacher only)"""
         section = await prisma.section.find_unique(where={"id": section_id})
-        if not section or section.teacher_id != teacher_id:
+        if not section or section.teacherId != teacher_id:
             return False
         
         await prisma.section.delete(where={"id": section_id})

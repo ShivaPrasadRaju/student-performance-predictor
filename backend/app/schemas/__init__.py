@@ -3,7 +3,7 @@ Pydantic schemas for request/response validation
 """
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, date
 
 # ===================== Auth Schemas =====================
 
@@ -105,6 +105,27 @@ class PredictionRequest(BaseModel):
     past_marks: float = Field(..., ge=0, le=100)
     engagement_score: float = Field(..., ge=0, le=10)
     student_id: Optional[int] = None  # For teachers creating predictions
+
+
+class WeeklyTaskEntry(BaseModel):
+    day: str
+    task: str
+    completed: bool = False
+
+
+class WeeklyTaskSyncRequest(BaseModel):
+    week_start: date
+    entries: List[WeeklyTaskEntry]
+
+
+class WeeklyTaskResponse(WeeklyTaskEntry):
+    id: int
+    week_start: datetime
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
 
 class PredictionResponse(BaseModel):
     """Prediction response schema"""

@@ -7,8 +7,7 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
-  const { setDemoStudent, setDemoTeacher } = useAuth();
+  const { login, setDemoStudent, setDemoTeacher } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,8 +17,7 @@ export const LoginPage: React.FC = () => {
 
     try {
       const user = await login(email, password);
-      const role = user?.role || JSON.parse(localStorage.getItem('user') || '{}').role;
-      if (role === 'teacher') navigate('/teacher-dashboard');
+      if (user?.role === 'teacher') navigate('/teacher-dashboard');
       else navigate('/student-dashboard');
     } catch (err) {
       setError('Invalid email or password');

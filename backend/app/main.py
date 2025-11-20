@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.config import settings
 from app.database import prisma, init_db
-from app.api import auth, students, predictions, info, sections
+from app.api import auth, students, predictions, info, sections, vtu_predictions, weekly_tasks
 
 # Lifespan context manager for startup/shutdown events
 @asynccontextmanager
@@ -40,6 +40,8 @@ app.include_router(students.router, prefix=settings.API_V1_STR)
 app.include_router(predictions.router, prefix=settings.API_V1_STR)
 app.include_router(info.router, prefix=settings.API_V1_STR)
 app.include_router(sections.router, prefix=settings.API_V1_STR)
+app.include_router(vtu_predictions.router, prefix=settings.API_V1_STR)
+app.include_router(weekly_tasks.router)
 
 @app.get("/")
 def root():
