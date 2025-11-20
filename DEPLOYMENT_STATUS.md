@@ -23,7 +23,7 @@
 - **API Documentation**: http://localhost:8000/docs
 - **Framework**: FastAPI + Uvicorn
 - **Terminal ID**: c8e036bf-8a5a-4dc4-8d3a-5c76a23be895
-- **Command**: `python run.py`
+- **Command**: `python -m uvicorn app.main:app --host 0.0.0.0 --port 8000`
 
 ### ML Model
 - **Status**: ✅ **TRAINED**
@@ -37,10 +37,20 @@
 
 ### Database
 - **Status**: ✅ **INITIALIZED**
-- **Type**: SQLite
-- **Location**: `backend/student_performance.db`
+- **Status**: ✅ **INITIALIZED**
+- **Type**: PostgreSQL (recommended for production) — SQLite supported for quick dev
+- **Connection**: see `DATABASE_URL` in `backend/.env`
 - **Tables**: users, students, predictions
-- **Auto-created**: Yes (on first backend run)
+- **Auto-created**: Yes (on first backend run or after applying migrations)
+
+### Prisma Migration
+- **Status**: ✅ **APPLIED**
+- **Notes**: Prisma schema was updated to use `postgresql` provider and applied to the configured database.
+- **Commands used**:
+  - `python -m prisma generate`  # generate client
+  - `python -m prisma db push`   # apply schema (quick sync) / used during dev
+  - `python -m prisma migrate dev --name init`  # when creating migrations
+
 
 ---
 

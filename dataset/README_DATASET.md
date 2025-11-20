@@ -6,6 +6,8 @@ This folder contains the training dataset for the Student Performance Prediction
 ## Files
 - `student_data.csv` - Synthetic dataset with 200+ student records
 
+**Location:** `dataset/student_data.csv`
+
 ## Dataset Description
 
 ### Source

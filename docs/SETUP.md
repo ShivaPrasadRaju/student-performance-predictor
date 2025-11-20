@@ -43,6 +43,21 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### 3.1 Prisma client (if using Prisma)
+After installing Python dependencies, generate the Prisma client and apply schema as needed:
+
+```bash
+cd backend
+# Generate Prisma client
+python -m prisma generate
+
+# Apply schema to DB (quick sync)
+python -m prisma db push
+
+# If you prefer migrations:
+python -m prisma migrate dev --name init
+```
+
 ### 4. Create Environment File
 ```bash
 # Copy example env file
@@ -68,7 +83,8 @@ This generates:
 
 ### 7. Run Backend Server
 ```bash
-python run.py
+# Start the backend with Uvicorn (use the project's Python interpreter / venv)
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 The server will start on `http://localhost:8000`
@@ -138,7 +154,7 @@ Generates optimized bundle in `dist/` folder
 
 ---
 
-## Complete Startup (from root directory)
+### Complete Startup (from root directory)
 
 ### Terminal 1 - Backend
 ```bash
@@ -151,7 +167,7 @@ venv\Scripts\activate
 source venv/bin/activate
 
 pip install -r requirements.txt
-python run.py
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 ### Terminal 2 - Frontend

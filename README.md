@@ -111,7 +111,7 @@ venv\Scripts\activate
 source venv/bin/activate
 
 pip install -r requirements.txt
-python run.py
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 # Backend runs on http://localhost:8000
 ```
 
@@ -133,7 +133,8 @@ npm run dev
 ### 5. Access the App
 - **Landing Page**: http://localhost:5173
 - **Backend API**: http://localhost:8000/docs (Swagger UI)
-- **Default Credentials**: 
+- **Demo Mode**: Click "Enter as Demo Student" or "Enter as Demo Teacher" on login/register pages to bypass authentication
+- **Real Credentials** (if backend is running):
   - Teacher: `teacher@school.com` / `password123`
   - Student: `student@school.com` / `password123`
 

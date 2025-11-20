@@ -21,9 +21,9 @@ This backend now uses **Prisma ORM with Python** (`prisma-client-py`) instead of
    - Updated `app/main.py` → Async lifespan management
 
 ### 4. **Dependencies Installed**
-   - `prisma==0.12.1` (Python client)
-   - `@prisma/cli` (Node.js for migrations)
-   - Database setup ready for PostgreSQL
+    - `prisma==0.15.0` (Python client)
+    - `@prisma/cli` (Node.js for migrations - optional)
+    - Database setup ready for PostgreSQL (recommended)
 
 ## 🚀 Quick Start
 
@@ -44,8 +44,16 @@ pip install -r requirements.txt
 # Generate Prisma client
 python -m prisma generate
 
-# Seed demo data (auto-runs on startup)
-python run.py
+# Apply Prisma schema to the database (quick sync)
+# For Postgres or SQLite when you want to sync schema without creating a migration
+python -m prisma db push
+
+# Generate/Regenerate Prisma client (run after migrations or schema changes)
+python -m prisma generate
+
+# Run backend (development)
+# Use the project's Python interpreter so imports and venv are correct
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 ## 📦 Using Prisma in Your Code
@@ -92,9 +100,16 @@ datasource db {
 
 3. **Reset and migrate**:
 ```bash
+# For Postgres (will drop data in dev):
 python -m prisma migrate reset
-# OR create new migration:
+# OR create and apply a migration in development:
 python -m prisma migrate dev --name migration_name
+```
+
+4. **Apply schema without creating a migration (quick sync)**
+```bash
+# Useful during development when schema drift is small
+python -m prisma db push
 ```
 
 ## 📝 Working with Migrations

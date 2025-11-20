@@ -355,7 +355,9 @@ Student 5: Emma Wilson (ID: S005)
 1. **Start Backend**
    ```bash
    cd backend
-   python run.py
+   # Activate venv first (Windows example)
+   venv\Scripts\activate
+   python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
    ```
 
 2. **Start Frontend**
@@ -373,6 +375,21 @@ Student 5: Emma Wilson (ID: S005)
    ```
    teacher@school.com / password123
    ```
+
+Alternatively, use the frontend demo buttons on the login/register pages: **"Enter as Demo Student"** or **"Enter as Demo Teacher"** to bypass real authentication for quick testing.
+
+## Seeding Demo Data (optional)
+
+If you want the demo credentials and sample sections to exist in the database, run the seeding script in the backend:
+
+```bash
+cd backend
+# Activate your venv first (Windows example)
+venv\Scripts\activate
+python seed_demo.py
+```
+
+This creates `teacher@school.com` and `student@school.com` with password `password123` and sample sections for quick testing.
 
 5. **Create a Prediction**
    - Click "+ Add Student" (optional)

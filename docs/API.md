@@ -11,6 +11,18 @@ All endpoints except auth and public endpoints require a Bearer token:
 Authorization: Bearer <jwt_token>
 ```
 
+Demo accounts are available for quick testing (or run the seeding script to create them):
+
+- Teacher: `teacher@school.com` / `password123`
+- Student: `student@school.com` / `password123`
+
+To create demo users in the database run:
+
+```bash
+cd backend
+python seed_demo.py
+```
+
 ---
 
 ## Authentication Endpoints
